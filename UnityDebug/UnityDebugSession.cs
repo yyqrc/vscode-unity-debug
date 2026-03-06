@@ -6,9 +6,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Mono.Debugging.Client;
 using Mono.Debugging.Soft;
@@ -94,6 +96,7 @@ namespace UnityDebug
 
             m_Session.TargetStopped += (sender, e) =>
             {
+                Log.Write($"[DIAG] EVENT TargetStopped: thread={e.Thread?.Id}, backtrace={e.Backtrace != null}");
                 if (e.Backtrace != null)
                 {
                     Frame = e.Backtrace.GetFrame(0);
@@ -105,19 +108,23 @@ namespace UnityDebug
 
                 Stopped();
                 SendEvent(CreateStoppedEvent("step", e.Thread));
+                Log.Write("[DIAG] EVENT TargetStopped: setting m_ResumeEvent");
                 m_ResumeEvent.Set();
             };
 
             m_Session.TargetHitBreakpoint += (sender, e) =>
             {
+                Log.Write($"[DIAG] EVENT TargetHitBreakpoint: thread={e.Thread?.Id}, backtrace frames={e.Backtrace?.FrameCount}");
                 Frame = e.Backtrace.GetFrame(0);
                 Stopped();
                 SendEvent(CreateStoppedEvent("breakpoint", e.Thread));
+                Log.Write("[DIAG] EVENT TargetHitBreakpoint: setting m_ResumeEvent");
                 m_ResumeEvent.Set();
             };
 
             m_Session.TargetExceptionThrown += (sender, e) =>
             {
+                Log.Write($"[DIAG] EVENT TargetExceptionThrown: thread={e.Thread?.Id}");
                 Frame = e.Backtrace.GetFrame(0);
                 for (var i = 0; i < e.Backtrace.FrameCount; i++)
                 {
@@ -136,6 +143,7 @@ namespace UnityDebug
                     SendEvent(CreateStoppedEvent("exception", e.Thread, ex.Message));
                 }
 
+                Log.Write("[DIAG] EVENT TargetExceptionThrown: setting m_ResumeEvent");
                 m_ResumeEvent.Set();
             };
 
@@ -154,15 +162,19 @@ namespace UnityDebug
 
             m_Session.TargetStarted += (sender, e) =>
             {
+                Log.Write("[DIAG] EVENT TargetStarted");
             };
 
             m_Session.TargetReady += (sender, e) =>
             {
+                Log.Write("[DIAG] EVENT TargetReady");
                 m_ActiveProcess = m_Session.GetProcesses().SingleOrDefault();
+                Log.Write($"[DIAG] EVENT TargetReady: activeProcess={m_ActiveProcess?.Name}");
             };
 
             m_Session.TargetExited += (sender, e) =>
             {
+                Log.Write("[DIAG] EVENT TargetExited");
                 DebuggerKill();
 
                 Terminate("target exited");
@@ -172,14 +184,19 @@ namespace UnityDebug
 
             m_Session.TargetInterrupted += (sender, e) =>
             {
+                Log.Write("[DIAG] EVENT TargetInterrupted: setting m_ResumeEvent");
                 m_ResumeEvent.Set();
             };
 
-            m_Session.TargetEvent += (sender, e) => { };
+            m_Session.TargetEvent += (sender, e) =>
+            {
+                Log.Write($"[DIAG] EVENT TargetEvent: type={e.GetType().Name}");
+            };
 
             m_Session.TargetThreadStarted += (sender, e) =>
             {
                 var tid = (int)e.Thread.Id;
+                Log.Write($"[DIAG] EVENT TargetThreadStarted: tid={tid}, name={e.Thread.Name}");
                 lock (m_SeenThreads)
                 {
                     m_SeenThreads[tid] = new Thread(tid, e.Thread.Name);
@@ -191,6 +208,7 @@ namespace UnityDebug
             m_Session.TargetThreadStopped += (sender, e) =>
             {
                 var tid = (int)e.Thread.Id;
+                Log.Write($"[DIAG] EVENT TargetThreadStopped: tid={tid}");
                 lock (m_SeenThreads)
                 {
                     m_SeenThreads.Remove(tid);
@@ -339,7 +357,7 @@ namespace UnityDebug
 
         void Connect(IPAddress address, int port)
         {
-            Log.Write($"UnityDebug: Connect to: {address}:{port}");
+            Log.Write($"[DIAG] Connect: {address}:{port}");
             lock (m_Lock)
             {
                 var args0 = new SoftDebuggerConnectArgs(string.Empty, address, port)
@@ -348,7 +366,9 @@ namespace UnityDebug
                     TimeBetweenConnectionAttempts = CONNECTION_ATTEMPT_INTERVAL
                 };
 
+                Log.Write("[DIAG] Connect: calling m_Session.Run()...");
                 m_Session.Run(new SoftDebuggerStartInfo(args0), m_DebuggerSessionOptions);
+                Log.Write("[DIAG] Connect: m_Session.Run() returned, setting m_DebuggeeExecuting=true");
 
                 m_DebuggeeExecuting = true;
             }
@@ -402,8 +422,7 @@ namespace UnityDebug
 
         public override void Disconnect(Response response, dynamic args)
         {
-            Log.Write($"UnityDebug: Disconnect: {args}");
-            Log.Write($"UnityDebug: Disconnect: {response}");
+            Log.Write($"[DIAG] Disconnect: enter, m_DebuggeeExecuting={m_DebuggeeExecuting}, m_Session.IsRunning={m_Session?.IsRunning}");
             if (unityDebugConnector != null)
             {
                 unityDebugConnector.OnDisconnect();
@@ -437,7 +456,7 @@ namespace UnityDebug
 
         public override void Continue(Response response, dynamic arguments)
         {
-            Log.Write($"UnityDebug: Continue: {response} ; {arguments}");
+            Log.Write($"[DIAG] Continue: enter, m_DebuggeeExecuting={m_DebuggeeExecuting}");
             WaitForSuspend();
             SendResponse(response, new ContinueResponseBody());
             lock (m_Lock)
@@ -551,6 +570,7 @@ namespace UnityDebug
 
         public override void SetBreakpoints(Response response, dynamic arguments)
         {
+            Log.Write($"[DIAG] SetBreakpoints: enter");
             string path = null;
 
             if (arguments.source != null)
@@ -632,6 +652,7 @@ namespace UnityDebug
                 }
             }
 
+            Log.Write($"[DIAG] SetBreakpoints: done, {responseBreakpoints.Count} breakpoints set for {path}");
             SendResponse(response, new SetBreakpointsResponseBody(responseBreakpoints));
         }
 
@@ -1016,12 +1037,40 @@ namespace UnityDebug
             }
         }
 
-        void WaitForSuspend()
+        void WaitForSuspend([CallerMemberName] string caller = "")
         {
-            if (!m_DebuggeeExecuting) return;
+            if (!m_DebuggeeExecuting)
+            {
+                Log.Write($"[DIAG] WaitForSuspend({caller}): debuggee not executing, skip wait");
+                return;
+            }
 
-            m_ResumeEvent.WaitOne();
-            m_DebuggeeExecuting = false;
+            Log.Write($"[DIAG] WaitForSuspend({caller}): waiting for suspend signal (m_DebuggeeExecuting=true)...");
+            var sw = Stopwatch.StartNew();
+
+            // 用带超时的 WaitOne，每 5 秒打一次心跳日志，总超时 60 秒报警
+            while (true)
+            {
+                if (m_ResumeEvent.WaitOne(5000))
+                {
+                    sw.Stop();
+                    Log.Write($"[DIAG] WaitForSuspend({caller}): got signal after {sw.ElapsedMilliseconds}ms");
+                    m_DebuggeeExecuting = false;
+                    return;
+                }
+
+                // 超时心跳
+                Log.Write($"[DIAG] WaitForSuspend({caller}): still waiting... elapsed={sw.ElapsedMilliseconds}ms, m_Session.IsRunning={m_Session?.IsRunning}, m_Session.HasExited={m_Session?.HasExited}");
+                SendOutput("stderr", $"[DIAG] WaitForSuspend({caller}): blocked for {sw.ElapsedMilliseconds}ms waiting for debuggee suspend\n");
+
+                if (sw.ElapsedMilliseconds > 60000)
+                {
+                    Log.Write($"[DIAG] WaitForSuspend({caller}): TIMEOUT after {sw.ElapsedMilliseconds}ms! Forcing m_DebuggeeExecuting=false to unblock.");
+                    SendOutput("stderr", $"[DIAG] WaitForSuspend({caller}): TIMEOUT! DAP message loop may be stuck. Forcing continue.\n");
+                    m_DebuggeeExecuting = false;
+                    return;
+                }
+            }
         }
     }
 }

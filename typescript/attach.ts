@@ -1,6 +1,6 @@
 'use strict';
 
-import {debug, workspace, commands, window, ExtensionContext, QuickPickItem, QuickPickOptions, DebugConfiguration, DebugConfigurationProvider, WorkspaceFolder, CancellationToken, ProviderResult} from 'vscode';
+import {debug, workspace, commands, window, ExtensionContext, QuickPickItem, QuickPickOptions, DebugConfiguration, DebugConfigurationProvider, WorkspaceFolder, CancellationToken, ProviderResult, ProgressLocation} from 'vscode';
 import {DebugProtocol} from 'vscode-debugprotocol';
 import * as nls from 'vscode-nls';
 import {exec} from 'child_process';
@@ -25,6 +25,7 @@ const DEFAULT_EXCEPTIONS: ExceptionConfigurations = {
 };
 
 export function activate(context: ExtensionContext) {
+    extensionPath = context.extensionPath;
     context.subscriptions.push(debug.registerDebugConfigurationProvider("unity", new UnityDebugConfigurationProvider()));
 
     exceptions = new Exceptions(DEFAULT_EXCEPTIONS);
@@ -91,43 +92,68 @@ class UnityDebugConfigurationProvider implements DebugConfigurationProvider {
 		return config;
 	}
 
-	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+	async resolveDebugConfiguration(folder: WorkspaceFolder | undefined, debugConfiguration: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration | undefined> {
         if (debugConfiguration && !debugConfiguration.__exceptionOptions) {
             debugConfiguration.__exceptionOptions = exceptions.convertToExceptionOptionsDefault();
         }
+
+        // 仅对 "Unity Editor" 类型且名称不含 PID 时才做进程选择
+        if (debugConfiguration && debugConfiguration.name === 'Unity Editor' && !/ \(\d+\)/.test(debugConfiguration.name)) {
+            const selected = await pickUnityEditorProcess();
+            if (!selected) {
+                return undefined; // 用户取消
+            }
+            debugConfiguration.name = selected;
+        }
+
 		return debugConfiguration;
 	}
 }
 
-function startSession(context: ExtensionContext, config: any) {
-    let execCommand = "";
-    if (process.platform !== 'win32')
-        execCommand = "mono ";
-    exec(execCommand + context.extensionPath + "/bin/UnityDebug.exe list", async function (error, stdout, stderr) {
-        const processes = [];
-        const lines = stdout.split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i]) {
-                processes.push(lines[i]);
-            }
-        }
-        if (processes.length == 0) {
-            window.showErrorMessage("No Unity Process Found.");
-        } else {
-            var chosen = await window.showQuickPick(processes);
-            if (!chosen) {
-                return;
-            }
-            const config = {
-                "name": chosen,
-                "request": "launch",
-                "type": "unity",
-                "__exceptionOptions": exceptions.convertToExceptionOptionsDefault()
-            }
-            let response = await debug.startDebugging(undefined, config);
-                    console.log("8");
+let extensionPath: string = "";
 
-            console.log("debug ended: " + response);
-        }
+function listUnityProcesses(): Promise<string[]> {
+    const execCommand = process.platform !== 'win32' ? "mono " : "";
+    return new Promise((resolve) => {
+        exec(execCommand + extensionPath + "/bin/UnityDebug.exe list", function (error, stdout) {
+            const processes = stdout.split("\n").filter(l => l.trim().length > 0);
+            resolve(processes);
+        });
     });
+}
+
+async function pickUnityEditorProcess(): Promise<string | undefined> {
+    const processes = await window.withProgress(
+        { location: ProgressLocation.Notification, title: "Searching for Unity Editor processes...", cancellable: false },
+        () => listUnityProcesses()
+    );
+    const editorProcesses = processes.filter(p => p.includes('Unity Editor'));
+    if (editorProcesses.length === 0) {
+        window.showErrorMessage("No Unity Editor process found.");
+        return undefined;
+    }
+    if (editorProcesses.length === 1) {
+        return editorProcesses[0];
+    }
+    return window.showQuickPick(editorProcesses, { placeHolder: "Select Unity Editor process to attach", ignoreFocusOut: true });
+}
+
+async function startSession(context: ExtensionContext, config: any) {
+    const processes = await listUnityProcesses();
+    if (processes.length === 0) {
+        window.showErrorMessage("No Unity Process Found.");
+        return;
+    }
+    const chosen = await window.showQuickPick(processes, { ignoreFocusOut: true });
+    if (!chosen) {
+        return;
+    }
+    const sessionConfig = {
+        "name": chosen,
+        "request": "launch",
+        "type": "unity",
+        "__exceptionOptions": exceptions.convertToExceptionOptionsDefault()
+    };
+    const response = await debug.startDebugging(undefined, sessionConfig);
+    console.log("debug ended: " + response);
 }

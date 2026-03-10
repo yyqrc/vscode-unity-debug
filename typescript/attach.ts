@@ -139,7 +139,10 @@ async function pickUnityEditorProcess(): Promise<string | undefined> {
 }
 
 async function startSession(context: ExtensionContext, config: any) {
-    const processes = await listUnityProcesses();
+    const processes = await window.withProgress(
+        { location: ProgressLocation.Notification, title: "Searching for Unity processes...", cancellable: false },
+        () => listUnityProcesses()
+    );
     if (processes.length === 0) {
         window.showErrorMessage("No Unity Process Found.");
         return;

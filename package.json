@@ -1,10 +1,14 @@
 {
-  "name": "cgame-unity-debug",
-  "displayName": "CGame Debugger for Unity",
+  "name": "unity-legacy-debug",
+  "displayName": "Unity Legacy Debugger",
   "version": "3.3.1",
-  "publisher": "cgame",
-  "description": "CGame fork of Unity debugger extension — attach C# debugger to Unity Editor and Players",
+  "publisher": "ashiqi",
+  "description": "Debug Unity 4.x/5.x projects — attach C# debugger to Unity Editor and Players via Mono Soft Debugger",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashiqi/vscode-unity-debug"
+  },
   "engines": {
     "vscode": "^1.47.x"
   },
@@ -104,8 +108,8 @@
     },
     "debuggers": [
       {
-        "type": "unity",
-        "label": "CGame Unity Debugger",
+        "type": "unity-legacy",
+        "label": "Unity Legacy Debugger",
         "program": "./bin/UnityDebug.exe",
         "osx": {
           "runtime": "mono"
@@ -136,7 +140,7 @@
             "label": "Unity Debug: Unity Editor",
             "body": {
               "name": "Unity Editor",
-              "type": "unity",
+              "type": "unity-legacy",
               "path": "^\"\\${workspaceFolder}/Library/EditorInstance.json\"",
               "request": "launch"
             }
@@ -145,7 +149,7 @@
             "label": "Unity Debug: Windows Player",
             "body": {
               "name": "Windows Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -153,7 +157,7 @@
             "label": "Unity Debug: OSX Player",
             "body": {
               "name": "OSX Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -161,7 +165,7 @@
             "label": "Unity Debug: Linux Player",
             "body": {
               "name": "Linux Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -169,7 +173,7 @@
             "label": "Unity Debug: iOS Player",
             "body": {
               "name": "iOS Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -177,7 +181,7 @@
             "label": "Unity Debug: Android Player",
             "body": {
               "name": "Android Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -185,7 +189,7 @@
             "label": "Unity Debug: Xbox One Player",
             "body": {
               "name": "Xbox One Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -193,7 +197,7 @@
             "label": "Unity Debug: PS4 Player",
             "body": {
               "name": "PS4 Player",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           },
@@ -201,7 +205,7 @@
             "label": "Unity Debug: SwitchPlayer",
             "body": {
               "name": "SwitchPlayer",
-              "type": "unity",
+              "type": "unity-legacy",
               "request": "launch"
             }
           }

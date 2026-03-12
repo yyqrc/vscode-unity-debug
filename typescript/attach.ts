@@ -26,7 +26,7 @@ const DEFAULT_EXCEPTIONS: ExceptionConfigurations = {
 
 export function activate(context: ExtensionContext) {
     extensionPath = context.extensionPath;
-    context.subscriptions.push(debug.registerDebugConfigurationProvider("unity", new UnityDebugConfigurationProvider()));
+    context.subscriptions.push(debug.registerDebugConfigurationProvider("unity-legacy", new UnityDebugConfigurationProvider()));
 
     exceptions = new Exceptions(DEFAULT_EXCEPTIONS);
     window.registerTreeDataProvider("exceptions", exceptions);
@@ -44,33 +44,33 @@ class UnityDebugConfigurationProvider implements DebugConfigurationProvider {
 		const config = [
 			{
 				name: "Unity Editor",
-				type: "unity",
+				type: "unity-legacy",
 				path: "${workspaceFolder}/Library/EditorInstance.json",
 				request: "launch"
 			},
 			{
 				name: "Windows Player",
-				type: "unity",
+				type: "unity-legacy",
 				request: "launch"
 			},
 			{
 				name: "OSX Player",
-				type: "unity",
+				type: "unity-legacy",
 				request: "launch"
 			},
 			{
 				name: "Linux Player",
-				type: "unity",
+				type: "unity-legacy",
 				request: "launch"
 			},
 			{
 				name: "iOS Player",
-				type: "unity",
+				type: "unity-legacy",
 				request: "launch"
 			},
 			{
 				name: "Android Player",
-				type: "unity",
+				type: "unity-legacy",
 				request: "launch"
             },
             {

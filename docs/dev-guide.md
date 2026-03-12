@@ -1,4 +1,4 @@
-# CGame Unity Debug — 开发与调试指南
+# Unity Legacy Debugger — 开发与调试指南
 
 本文档记录了从原版 `unity-debug` 插件 fork 后的改造过程、遇到的核心问题及解决方案，供后续开发调试参考。
 
@@ -9,16 +9,16 @@
 | 项 | 值 |
 |---|---|
 | 原版仓库 | Unity Technologies / vscode-unity-debug（已归档） |
-| Fork 目的 | 为 CGame 项目维护一个可用的 Unity VS Code 调试插件 |
-| 包名 | `cgame-unity-debug` |
-| Debugger Type | `cgame-unity`（避免与其他 Unity 调试插件冲突） |
-| 版本 | 3.1.0 |
-| Publisher | cgame |
+| Fork 目的 | 维护一个适用于 Unity 4.x/5.x 的 VS Code 调试插件 |
+| 包名 | `unity-legacy-debug` |
+| Debugger Type | `unity-legacy`（避免与其他 Unity 调试插件冲突） |
+| 版本 | 3.3.1 |
+| Publisher | ashiqi |
 
 ### 改动概要
 
-- `package.json`: name / displayName / publisher / version / debugger type 全部重命名
-- `typescript/attach.ts`: 所有 `type: "unity"` → `type: "cgame-unity"`
+- `package.json`: name / displayName / publisher / debugger type 全部重命名
+- `typescript/attach.ts`: 所有 `type: "unity"` → `type: "unity-legacy"`
 - `debugger-libs/` 子模块使用 master HEAD（`632350d5`），相比 p1gd0g 版本（`945b9a37`）多约 399 个 commit
 
 ---
@@ -47,7 +47,7 @@ npx tsc -p ./typescript
 
 # 3. 打包 VSIX
 npx @vscode/vsce package
-# 产出: cgame-unity-debug-3.1.0.vsix
+# 产出: unity-legacy-debug-3.3.1.vsix
 ```
 
 ### 常见编译问题
@@ -66,7 +66,7 @@ npx @vscode/vsce package
 VS Code
   │
   ├─ TypeScript Frontend (typescript/attach.ts)
-  │    ├─ 注册 debugger type "cgame-unity"
+  │    ├─ 注册 debugger type "unity-legacy"
   │    ├─ 运行 UnityDebug.exe list → QuickPick 选择进程
   │    └─ 管理 Exception Breakpoint 状态 (exceptions.ts)
   │
@@ -325,7 +325,7 @@ rg "CheckProtocolVersion|\.AtLeast\s*\(" debugger-libs/ --type cs
 
 ```powershell
 # 查找插件安装位置
-Get-ChildItem "$env:USERPROFILE\.vscode\extensions\cgame.cgame-unity-debug-*\bin\"
+Get-ChildItem "$env:USERPROFILE\.vscode\extensions\ashiqi.unity-legacy-debug-*\bin\"
 
 # 查看日志
 Get-Content "...\bin\SoftDebugger-diag.txt" -Tail 50

@@ -1,12 +1,52 @@
-*
-**
-**/.DS_Store
-**/.mdb
+.gitmodules
+**/*.cs
+**/*.csproj
+**/*.sln
+**/Makefile
+**/packages.config
+**/*.resx
+**/*.snk
+**/*.props
+**/*.targets
+
+# 子模块和外部依赖
+debugger-libs/**
+External/**
+nrefactory/**
+
+# 测试项目
+Tests/**
+TestApp/**
+AppDomainClient/**
+NonUserCodeTestLib/**
+
+# 文档和工具
+.claude/**
+docs/**
+CHANGELOG.md
+
+# 依赖的源码（已编译到 bin）
+MonoDebug/**
+MonoDevelop.Debugger.Soft.Unity/**
+Screenshots/**
+
+# 开发依赖
+node_modules/npm/**
+node_modules/make/**
+node_modules/@types/**
+
+# 排除所有 md 文件，但保留 README 和 LICENSE
+*.md
+!README.md
+!LICENSE.txt
+
+# VS Code 配置
+.vscode/**
+!.vscodeignore
+
+# 必须保留的文件
+!.vscodeignore
 !package.json
 !bin/**
-!Changelog.txt
-!LICENSE.txt
-!README.md
 !Images/**
 !out/**
-!node_modules/**

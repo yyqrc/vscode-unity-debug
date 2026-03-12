@@ -1,6 +1,7 @@
 Copyright (c) Unity Technologies
+Copyright (c) ashiqi
 
-All rights reserved. 
+All rights reserved.
 
 MIT License
 

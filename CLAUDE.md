@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-VS Code debug adapter extension for Unity, forked from the archived `unity-debug` (Unity Technologies). Rebranded as **cgame-unity-debug** v3.1.0, publisher `cgame`, debugger type `cgame-unity`. The extension enables attaching a C# debugger to Unity Editor and various platform Players.
+VS Code debug adapter extension for Unity, forked from the archived `unity-debug` (Unity Technologies). Rebranded as **unity-legacy-debug** v3.3.1, publisher `ashiqi`, debugger type `unity-legacy`. The extension enables attaching a C# debugger to Unity Editor and various platform Players.
 
 ## Build & Development Commands
 
@@ -53,7 +53,7 @@ VS Code launches the C# adapter as a child process. On macOS/Linux it runs via `
 ### TypeScript Layer (`typescript/`)
 
 **`attach.ts`** — Extension entry point registered via `package.json` `main: "./out/attach.js"`:
-- Registers `UnityDebugConfigurationProvider` for debug type `"cgame-unity"`
+- Registers `UnityDebugConfigurationProvider` for debug type `"unity-legacy"`
 - `provideDebugConfigurations()` returns 9 preset launch configs (Unity Editor + 8 platform Players)
 - `resolveDebugConfiguration()` injects exception breakpoint settings before session start
 - `startSession()` command shells out to `UnityDebug.exe list` to enumerate attachable Unity processes, presents a QuickPick, then starts a debug session with the selected process name
